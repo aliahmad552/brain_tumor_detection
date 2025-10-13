@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Brain Tumor Detection</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>🧠 Brain Tumor Detection</h1>
+            <p>
+                This AI-powered web app detects brain tumors from MRI images with high precision.
+                Upload your MRI scan using the drag-and-drop area below and the model will predict
+                whether the image shows a Glioma, Meningioma, Pituitary tumor, or No Tumor.
+            </p>
+
+            <div class="drop-zone" id="drop-zone">
+                <p>Drag & Drop your image here or click to upload</p>
+                <input type="file" id="fileInput" accept="image/*">
+            </div>
+
+            <img id="preview" src="" alt="Image Preview">
+
+            <button id="predictBtn">Predict</button>
+
+            <div class="result" id="result">
+                <div class="confidence-bar">
+                    <div class="confidence-fill" id="confidenceFill"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('fileInput');
+        const preview = document.getElementById('preview');
+        const resultDiv = document.getElementById('result');
+        const confidenceFill = document.getElementById('confidenceFill');
+        const predictBtn = document.getElementById('predictBtn');
+        let selectedFile = null;
+
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('hover');
+        });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('hover'));
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('hover');
+            const file = e.dataTransfer.files[0];
+            handleFile(file);
+        });
+        fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+
+        function handleFile(file) {
+            if (!file) return;
+            selectedFile = file;
+            const reader = new FileReader();
+            reader.onload = () => preview.src = reader.result;
+            reader.readAsDataURL(file);
+        }
+
+        predictBtn.addEventListener('click', async () => {
+            if (!selectedFile) {
+                alert("Please upload an image first!");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("file", selectedFile);
+
+            resultDiv.textContent = "Processing...";
+            confidenceFill.style.width = "0%";
+
+            try {
+                const response = await fetch("/predict", {
+                    method: "POST",
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    resultDiv.textContent = "Error: " + data.error;
+                } else {
+                    resultDiv.innerHTML = `
+                        <strong>Prediction:</strong> ${data.prediction}<br>
+                        <strong>Confidence:</strong> ${data.confidence}%`;
+                    confidenceFill.style.width = `${data.confidence}%`;
+                }
+            } catch (err) {
+                resultDiv.textContent = "Error: " + err.message;
+            }
+        });
+    </script>
+</body>
+</html>
