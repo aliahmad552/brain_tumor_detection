@@ -3,67 +3,216 @@
 <head>
     <meta charset="UTF-8">
     <title>Brain Tumor Detection</title>
-    <link rel="stylesheet" href="/static/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(to right, #e3f2fd, #ede7f6);
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 40px;
+            width: 95%;
+            max-width: 650px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            text-align: center;
+        }
+
+        h1 {
+            color: #4a148c;
+            font-size: 2.4rem;
+            margin-bottom: 15px;
+        }
+
+        p {
+            color: #555;
+            font-size: 1.1rem;
+        }
+
+        /* Drop Zone */
+        .drop-zone {
+            border: 3px dashed #6a1b9a;
+            border-radius: 15px;
+            padding: 40px;
+            margin-top: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background-color: #fafafa;
+        }
+
+        .drop-zone.hover {
+            background-color: #f3e5f5;
+        }
+
+        .drop-zone p {
+            color: #6a1b9a;
+            margin: 0;
+            font-weight: 500;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        /* Image Preview */
+        #preview {
+            margin-top: 25px;
+            max-width: 100%;
+            height: 300px;
+            border-radius: 10px;
+            border: 2px solid #6a1b9a;
+            object-fit: contain;
+            display: none;
+        }
+
+        /* Buttons */
+        button {
+            margin-top: 25px;
+            padding: 14px 28px;
+            background-color: #6a1b9a;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #8e24aa;
+        }
+
+        #resetBtn {
+            background-color: #9c27b0;
+            margin-top: 20px;
+            display: none;
+        }
+
+        #resetBtn:hover {
+            background-color: #ab47bc;
+        }
+
+        /* Result Box */
+        .result {
+            margin-top: 25px;
+            font-size: 1.2rem;
+            background: #f3e5f5;
+            padding: 20px;
+            border-radius: 12px;
+            color: #4a148c;
+            display: none;
+        }
+
+        .confidence-bar {
+            height: 20px;
+            border-radius: 10px;
+            background: #ddd;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            width: 0%;
+            background: #8e24aa;
+            border-radius: 10px;
+            transition: width 0.6s ease;
+        }
+
+        /* Loader */
+        .loader {
+            display: none;
+            margin: 15px auto;
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid #6a1b9a;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <div class="card">
-            <h1>🧠 Brain Tumor Detection</h1>
-            <p>
-                This AI-powered web app detects brain tumors from MRI images with high precision.
-                Upload your MRI scan using the drag-and-drop area below and the model will predict
-                whether the image shows a Glioma, Meningioma, Pituitary tumor, or No Tumor.
-            </p>
+    <div class="card">
+        <h1>🧠 Brain Tumor Detection</h1>
+        <p>Upload your MRI scan — this AI-powered model will predict the tumor type with confidence.</p>
 
-            <div class="drop-zone" id="drop-zone">
-                <p>Drag & Drop your image here or click to upload</p>
-                <input type="file" id="fileInput" accept="image/*">
-            </div>
+        <!-- Drop Zone -->
+        <div class="drop-zone" id="drop-zone">
+            <p>📁 Drag & Drop your MRI image here or click to upload</p>
+            <input type="file" id="fileInput" accept="image/*">
+        </div>
 
-            <img id="preview" src="" alt="Image Preview">
+        <!-- Image Preview -->
+        <img id="preview" src="" alt="Image Preview">
 
-            <button id="predictBtn">Predict</button>
+        <!-- Predict Button -->
+        <button id="predictBtn" style="display: none;">🔍 Predict</button>
+        <div class="loader" id="loader"></div>
 
-            <div class="result" id="result">
-                <div class="confidence-bar">
-                    <div class="confidence-fill" id="confidenceFill"></div>
-                </div>
+        <!-- Result -->
+        <div class="result" id="result">
+            <div class="confidence-bar">
+                <div class="confidence-fill" id="confidenceFill"></div>
             </div>
         </div>
+
+        <!-- Reset Button -->
+        <button id="resetBtn">🔁 Predict Again</button>
     </div>
 
     <script>
         const dropZone = document.getElementById('drop-zone');
         const fileInput = document.getElementById('fileInput');
         const preview = document.getElementById('preview');
+        const predictBtn = document.getElementById('predictBtn');
+        const loader = document.getElementById('loader');
         const resultDiv = document.getElementById('result');
         const confidenceFill = document.getElementById('confidenceFill');
-        const predictBtn = document.getElementById('predictBtn');
+        const resetBtn = document.getElementById('resetBtn');
         let selectedFile = null;
 
+        // Drag & Drop
         dropZone.addEventListener('click', () => fileInput.click());
-        dropZone.addEventListener('dragover', (e) => {
+        dropZone.addEventListener('dragover', e => {
             e.preventDefault();
             dropZone.classList.add('hover');
         });
         dropZone.addEventListener('dragleave', () => dropZone.classList.remove('hover'));
-        dropZone.addEventListener('drop', (e) => {
+        dropZone.addEventListener('drop', e => {
             e.preventDefault();
             dropZone.classList.remove('hover');
-            const file = e.dataTransfer.files[0];
-            handleFile(file);
+            handleFile(e.dataTransfer.files[0]);
         });
-        fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+
+        fileInput.addEventListener('change', e => handleFile(e.target.files[0]));
 
         function handleFile(file) {
             if (!file) return;
             selectedFile = file;
+            dropZone.style.display = "none"; // Hide drop zone
             const reader = new FileReader();
-            reader.onload = () => preview.src = reader.result;
+            reader.onload = () => {
+                preview.src = reader.result;
+                preview.style.display = "block";
+                predictBtn.style.display = "inline-block";
+            };
             reader.readAsDataURL(file);
         }
 
+        // Predict Function
         predictBtn.addEventListener('click', async () => {
             if (!selectedFile) {
                 alert("Please upload an image first!");
@@ -73,28 +222,47 @@
             const formData = new FormData();
             formData.append("file", selectedFile);
 
-            resultDiv.textContent = "Processing...";
+            loader.style.display = "block";
+            resultDiv.style.display = "none";
+            predictBtn.style.display = "none";
             confidenceFill.style.width = "0%";
 
             try {
-                const response = await fetch("/predict", {
-                    method: "POST",
-                    body: formData
-                });
-
+                const response = await fetch("/predict", { method: "POST", body: formData });
                 const data = await response.json();
 
+                loader.style.display = "none";
+                resultDiv.style.display = "block";
+                resetBtn.style.display = "inline-block";
+
                 if (data.error) {
-                    resultDiv.textContent = "Error: " + data.error;
+                    resultDiv.innerHTML = "❌ Error: " + data.error;
                 } else {
                     resultDiv.innerHTML = `
-                        <strong>Prediction:</strong> ${data.prediction}<br>
-                        <strong>Confidence:</strong> ${data.confidence}%`;
-                    confidenceFill.style.width = `${data.confidence}%`;
+                        ✅ <b>Prediction:</b> ${data.prediction}<br>
+                        📊 <b>Confidence:</b> ${(data.confidence).toFixed(2)}%
+                    `;
+                    confidenceFill.style.width = `${(data.confidence).toFixed(2)}%`;
                 }
             } catch (err) {
-                resultDiv.textContent = "Error: " + err.message;
+                loader.style.display = "none";
+                resultDiv.style.display = "block";
+                resetBtn.style.display = "inline-block";
+                resultDiv.textContent = "❌ Error: " + err.message;
             }
+        });
+
+        // Reset Function
+        resetBtn.addEventListener('click', () => {
+            selectedFile = null;
+            fileInput.value = "";
+            preview.src = "";
+            preview.style.display = "none";
+            resultDiv.style.display = "none";
+            predictBtn.style.display = "none";
+            loader.style.display = "none";
+            resetBtn.style.display = "none";
+            dropZone.style.display = "block";
         });
     </script>
 </body>

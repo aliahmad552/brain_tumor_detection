@@ -1,6 +1,12 @@
-fastapi==0.115.0
-uvicorn==0.30.6
+# Core ML/Deep Learning
 tensorflow==2.19.0
-numpy==1.26.4
-Pillow==10.4.0
-python-multipart==0.0.9
+numpy==2.0.2
+Pillow==10.1.0
+h5py==3.9.0
+
+# Optional: For preprocessing images with Keras utils
+keras==2.19.0
+
+# FastAPI for deployment
+fastapi==0.100.0
+uvicorn==0.23.2
