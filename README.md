@@ -76,3 +76,9 @@ Make sure you have **Python 3.10+** installed, then install the required librari
 ```bash
 pip install fastapi uvicorn tensorflow pillow numpy python-multipart
 
+```
+
+### 🧠 Step 2: Run the FastAPI Server
+``` bash
+uvicorn main:app --reload
+
