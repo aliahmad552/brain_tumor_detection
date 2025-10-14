@@ -82,3 +82,9 @@ pip install fastapi uvicorn tensorflow pillow numpy python-multipart
 ``` bash
 uvicorn main:app --reload
 
+```
+### 🌍 Step 3: Open in Browser
+
+Go to:
+```bash
+http://127.0.0.1:8000
