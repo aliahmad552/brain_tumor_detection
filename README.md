@@ -27,6 +27,11 @@ Now, when a user uploads an MRI image, the AI model can automatically classify i
 
 ---
 
+## 🎥 Demo on YouTube
+
+Watch the full demo here:  
+👉 [Click to Watch on YouTube](https://youtu.be/EnqnCspj0W8)
+
 ## ⚙️ Techniques & Technologies Used
 
 This project combines **Machine Learning**, **Deep Learning**, and **Web Development** to create a complete end-to-end solution.
